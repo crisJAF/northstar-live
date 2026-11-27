@@ -1,54 +1,70 @@
-# Northstar Live
+# Northstar Live — Operación Nochebuena
 
-Real-time multiplayer event platform built with React, Node.js and Socket.IO. Its first experience, **Santa.exe — Navidad en producción**, turns a Christmas gathering into a cooperative incident-response game.
+A cooperative, realtime Christmas adventure for 14 friends (seven pairs). React + Vite, Node.js + Socket.IO. Original articulated SVG characters and Spanish dialogue with Nicaraguan humor.
 
-## Run locally
+## Run on the local network
 
-Requires Node.js 22.12 or later.
+Requires Node.js 22.12 or newer.
 
 ```sh
 npm install
 npm run dev
 ```
 
-Open http://localhost:5173, create a room, and open the audience screen in a separate tab. The presenter controls pacing. Players join with a six-character room code and nickname.
-
-For phones, use the laptop's LAN IP (for example `http://192.168.1.20:5173`) on the same Wi-Fi. Enter that address in the presenter's QR address field. `localhost` on a phone refers to the phone, not the laptop. The network must permit access to the Vite server; do not disable the firewall globally.
-
-## Production build
+Vite binds to `0.0.0.0:5173` and proxies Socket.IO to `127.0.0.1:3001`. Open the **Network** URL printed by Vite on the laptop and phones connected to the same Wi-Fi. Do not use localhost on a phone. The presenter can edit the QR base URL; the audience-screen link carries that address too. The server must be reachable through the local firewall and the Wi-Fi must permit device-to-device connections.
 
 ```sh
+npm test
 npm run build
 npm start
 ```
 
-One Node process serves the frontend and WebSocket connections on port 3001 (override with `PORT`). Deploy on a Node host with WebSocket support and HTTPS. This is not a static GitHub Pages application.
+The production build is served by Node on port 3001 (`PORT` overrides it). This needs a Node/WebSocket host; it is not a GitHub Pages static app.
 
-## First playable release
+## Experience
 
-- Host, audience and mobile player views; QR joining.
-- Balanced teams, up to 20 players; designed for 14 friends.
-- Server-authoritative votes, hidden tallies until reveal, repeat-vote replacement.
-- Private proposal moderation and public shortlist voting.
-- Cooperative hold-to-charge challenge with stale-input timeout.
-- Shared finale, reconnection tokens, presenter recovery in the same browser tab.
-- Presenter-only actions validated on the server; host keys never broadcast.
-- Responsive interface, keyboard controls and reduced-motion support.
+- Full adventure: intended for 30–40 minutes; short route: 15–20 minutes. Real duration depends on the group and presenter.
+- Symbol-order password with distributed clues.
+- Two-round electrical panel: operators cannot see the manual; technicians cannot submit. Roles swap after the first solution.
+- Budget negotiation, private moderation and public voting for a custom labor clause.
+- Gift-to-city deduction and startup-sequence reconstruction.
+- Hold/release/hold cooperative charging with expired-input detection.
+- Audit requiring chronological order, culprit and decisive evidence.
+- Three earned seals unlock the final reboot code; shared lights and final resolutions.
+- Timers are advisory, with presenter controls for extra time, three hints, assisted solutions and explicit skips.
+- Santa, Rodolfo, Yelba and Kevin animate while waiting and react to attempts and success. Four illustrated locations, snow, conveyor gifts, sleigh movement and finale confetti. Reduced motion is respected.
 
-## Scope and limitations
+## Employment catalog and session behavior
 
-This MVP uses in-memory rooms: restarting the server clears games. Use one server instance; it is not yet suitable for an unrestricted public service. There are no accounts, persistent scores or durable recovery. The presenter manually advances scenes, resolves ties aloud and may bypass a challenge. No CAPTCHA minigame, synchronized sound, automatic countdown, personalized awards or hold/release reversal yet. The audience screen currently uses its own origin for the QR; open it using the LAN/public address when projecting. External Google Fonts are optional; system fallbacks work without internet.
+`shared/jobs.js` contains the hardcoded decorative jobs, experience and hiring reasons. The server assigns a random catalog entry at join, without repeating the first 14 assignments. No job influences permissions or puzzle difficulty.
 
-Do not share the presenter browser session. For the event, rehearse with the actual Wi-Fi, screen and phones before guests arrive. Use `npm test` for domain and 14-client Socket.IO integration checks.
+**Only the nickname is stored in browser sessionStorage**, under `northstar-nickname`. No room keys, roles, jobs or player tokens are written to localStorage, sessionStorage, cookies or a database. Legacy prototype credential entries are removed. The active room and credentials exist in memory only.
 
-## Structure
+A brief network interruption reconnects the same player while the page remains open. A full reload intentionally loses that player credential. The presenter can remove the disconnected entry so the same nickname can join again with a fresh card. Active duplicate nicknames are rejected rather than impersonating someone by name. The host can manually copy their recovery key from the private panel and re-enter it after reloading; the app does not persist it. Never project that private panel.
 
-`src/`: React interface and styling. `shared/story.js`: Spanish scenes and outcomes. `server/game.js`: domain rules and public/private snapshots. `server/index.js`: HTTP and realtime transport. `test/`: game and integration tests.
+## Presenter flow
 
-## Next milestones
+1. Create a room and select a duration.
+2. Open **Pantalla del público** on the projector. Keep the host panel private.
+3. Invite players via QR, wait for everyone, and ask them to find their numbered pair.
+4. Start the adventure. Players share clues aloud and submit solutions from phones.
+5. Use hints before assisted skips. Choose 1–4 proposals before opening the vote.
+6. Advance manually after the shared light ceremony.
 
-1. Rehearse on the venue network and refine pacing with real players.
-2. Add sound, coordinated release phase and a richer animated finale.
-3. Add durable room recovery, expiration and deployment configuration.
+## Architecture and verification
 
-No license has been granted yet; choose one before inviting external reuse.
+- `shared/story.js`: public narrative, routes and choice labels.
+- `shared/jobs.js`: fixed fictional employment catalog.
+- `server/puzzles.js`: private answers, clue distribution, validation and hint ladders. Not imported into the client bundle.
+- `server/game.js`: authoritative state transitions and recipient-specific snapshots.
+- `server/index.js`: realtime transport, host authorization and charge tick.
+- `src/Stage.jsx`: original vector cast and locations.
+- `src/Puzzle.jsx`: accessible puzzle controls.
+- `src/session.js`: nickname-only persistence and prototype migration.
+- `test/`: uniqueness, privacy, role switching, charging, moderation, storage and full 14-client integration checks.
+
+## Current boundaries
+
+Rooms are in memory and disappear on server restart; use one server instance. No accounts, durable scores or automatic room expiry. The app is intended for a trusted gathering on a local network, not an unrestricted public service. Capacity is 20, with content designed for 14. Hints let the presenter recover from missing participants. Google Fonts are optional, with system font fallback. Character motion is procedural SVG/CSS, not prerecorded films or voice acting. Rehearse on the actual phones and venue Wi-Fi.
+
+No license has been granted yet.
