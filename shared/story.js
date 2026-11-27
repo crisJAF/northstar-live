@@ -1,0 +1,12 @@
+export const teams = ['Renos con guaro', 'Duendes de confianza'];
+export const scenes = [
+ {title:'Reclutamiento de emergencia', tag:'SALA DE ESPERA', text:'La Navidad necesita soporte técnico. El presupuesto no alcanza para profesionales.', type:'lobby'},
+ {title:'Santa.exe dejó de funcionar',tag:'INCIDENTE 01 · ACCESO',text:'Santa olvidó la contraseña. Sus últimos intentos fueron Santa123 y LaMismaDelAñoPasado. ¿Cómo entramos?',type:'vote',options:['Mandar código al celular','Preguntarle a la señora Claus','Usar la cuenta del pasante'],outcomes:['El celular está en el trineo. El trineo se abre con la app. Qué belleza.','Acceso recuperado. Ahora toca explicar quién es Duendecita ❤️.','Acceso concedido. El pasante tenía permisos de administrador.']},
+ {title:'Los duendes están en huelga',tag:'INCIDENTE 02 · RECURSOS HUMANOS',text:'“Nos dijeron que éramos una familia. ¿Y el aguinaldo, maje?” Proponé una prestación para que vuelvan a trabajar.',type:'proposal'},
+ {title:'Negociación colectiva',tag:'VOTACIÓN · CONVENIO',text:'Elegí la prestación que va a salvar la producción de regalos.',type:'ballot'},
+ {title:'El trineo no arranca',tag:'INCIDENTE 03 · ENERGÍA',text:'Rodolfo está de goma. Mantengan presionado el botón para cargar el trineo entre los dos equipos.',type:'charge'},
+ {title:'¿Quién jodió la Navidad?',tag:'INCIDENTE 04 · AUDITORÍA',text:'El sistema volvió. Ahora toca encontrar al responsable de tocar producción.',type:'vote',options:['El pasante','Rodolfo','Santa','El programador'],outcomes:['El pasante era inocente. Por primera vez en la historia.','Rodolfo estaba de goma, pero no fue él.','Correcto. Santa presionó “Mejorar rendimiento” 17 veces.','“En mi máquina sí funcionaba”. Pero esta vez el culpable fue Santa.']},
+ {title:'Resolución no apelable',tag:'INCIDENTE 05 · CONSECUENCIAS',text:'Santa ignoró todas las advertencias y dijo “eso ya estaba así”. Elegí su castigo.',type:'vote',options:['Quitarle permisos de administrador','Mandarlo a capacitación','Que pague la próxima ronda'],outcomes:['Santa ya no tiene permisos de administrador. Paz mundial.','Santa fue inscrito en “No tocar lo que funciona 101”.','Santa pagará la próxima ronda. Recursos Humanos tomó nota.']},
+ {title:'Un último reinicio',tag:'RESTAURACIÓN · TODOS JUNTOS',text:'Cada luz es alguien que ayudó. Encendé la tuya para devolverle la Navidad al mundo.',type:'ready'},
+ {title:'Navidad restaurada.',tag:'MISIÓN COMPLETADA',text:'No sabemos cantar, pero por lo menos levantamos producción. Feliz Navidad, montón de vagos.',type:'final'}
+];
