@@ -2,9 +2,10 @@ import React, { useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { io } from "socket.io-client";
 import { QRCodeSVG } from "qrcode.react";
-import { scenes, teams } from "../shared/story.js";
+import { scenes } from "../shared/story.js";
 import Stage from "./Stage.jsx";
 import Puzzle from "./Puzzle.jsx";
+import RankingTree from "./RankingTree.jsx";
 import {
   loadNickname,
   saveNickname,
@@ -39,6 +40,7 @@ function App() {
     [recoveryKey, setRecoveryKey] = useState(""),
     [now, setNow] = useState(Date.now()),
     [busy, setBusy] = useState(false);
+  const clockOffset = useRef(0);
   const resume = useRef(null),
     holding = useRef(false);
   const act = (data) =>
@@ -55,7 +57,11 @@ function App() {
       }),
     );
   useEffect(() => {
-    const state = (r) => setRoom(r);
+    const state = (r) => {
+      clockOffset.current = r.serverNow - Date.now();
+      setRoom(r);
+      setNow(r.serverNow);
+    };
     const on = () => {
       setConnected(true);
       if (resume.current) act(resume.current);
@@ -71,7 +77,10 @@ function App() {
       resume.current = { type: "watch", code: query.get("room") };
       act(resume.current);
     }
-    const clock = setInterval(() => setNow(Date.now()), 1000);
+    const clock = setInterval(
+      () => setNow(Date.now() + clockOffset.current),
+      1000,
+    );
     return () => {
       socket.off("state", state);
       socket.off("connect", on);
@@ -86,12 +95,12 @@ function App() {
   useEffect(() => {
     const timer = setInterval(() => {
       if (holding.current && socket.connected)
-        act({ type: "hold", value: true });
+        act({ type: "hold", scene: "charge", value: true });
     }, 500);
     const release = () => {
       if (holding.current) {
         holding.current = false;
-        act({ type: "hold", value: false });
+        act({ type: "hold", scene: "charge", value: false });
       }
     };
     window.addEventListener("blur", release);
@@ -143,7 +152,7 @@ function App() {
   }
   function hold(value) {
     holding.current = value;
-    act({ type: "hold", value });
+    act({ type: "hold", scene: "charge", value });
   }
   const scene = room && scenes.find((s) => s.id === room.scene),
     me = room?.players.find((p) => p.id === player),
@@ -163,9 +172,7 @@ function App() {
       )
     : 0;
   const mood =
-    room?.puzzle?.solved ||
-    (room?.energy === 100 && scene?.type === "charge") ||
-    scene?.type === "final"
+    room?.myWon || room?.closed || scene?.type === "final"
       ? "celebrate"
       : room?.puzzle?.attempts > 0 && !room?.puzzle?.solved
         ? "oops"
@@ -193,7 +200,7 @@ function App() {
         <main className="landing">
           <section>
             <div className="eyebrow">
-              UNA AVENTURA COOPERATIVA · EDICIÓN NICARAGUA
+              UNA COMPETENCIA INDIVIDUAL · EDICIÓN NICARAGUA
             </div>
             <h1>
               El caos nunca
@@ -208,7 +215,7 @@ function App() {
             </p>
             <div className="tags">
               <span>14 amigos</span>
-              <span>7 parejas</span>
+              <span>Puntos individuales</span>
               <span>Cero experiencia</span>
             </div>
             <Stage
@@ -342,6 +349,35 @@ function App() {
                 final={scene.type === "final"}
               />
               <p className="intro">{scene.text}</p>
+              {["puzzle", "charge"].includes(scene.type) && (
+                <div className="quota-board" role="status">
+                  <strong>
+                    {room.winners.length}/{room.target} cupos completados
+                  </strong>
+                  <span>
+                    100 puntos por acierto · Solo los primeros {room.target}
+                  </span>
+                  {room.advanceAt && (
+                    <b>
+                      Próximo capítulo en{" "}
+                      {Math.max(0, Math.ceil((room.advanceAt - now) / 1000))}s
+                    </b>
+                  )}
+                  {room.winners.length > 0 && (
+                    <p>{room.winners.map((w) => w.name).join(" · ")}</p>
+                  )}
+                  {room.assisted && (
+                    <small>
+                      Cierre asistido: no se otorgaron puntos adicionales.
+                    </small>
+                  )}
+                </div>
+              )}
+              {me && scene.type !== "final" && (
+                <div className="personal-score">
+                  Tu puntaje <strong>{me.score}</strong>
+                </div>
+              )}
               {room.seals.length > 0 && (
                 <div className="seals" aria-label="Sellos recuperados">
                   {room.seals.map((s) => (
@@ -357,9 +393,7 @@ function App() {
                     <span className="badge-icon">✦</span>
                     <span>
                       <strong>{me.name}</strong>
-                      <small>
-                        Pareja {me.pair + 1} · {teams[me.team]}
-                      </small>
+                      <small>{me.score} puntos · Competidor individual</small>
                     </span>
                     <span className="credential-label">CREDENCIAL</span>
                   </summary>
@@ -389,9 +423,7 @@ function App() {
                         }
                       >
                         <strong>{p.name}</strong>
-                        <small>
-                          Pareja {p.pair + 1} · {p.job.title}
-                        </small>
+                        <small>{p.job.title}</small>
                       </div>
                     ))}
                   </div>
@@ -401,8 +433,8 @@ function App() {
                     </p>
                   )}
                   <p className="muted">
-                    Buscá a tu pareja. Cada uno recibirá pistas y controles
-                    durante la misión.
+                    Jugá por tu cuenta. Los primeros {room.target} en resolver
+                    cada puzzle ganan 100 puntos. El cupo se fija al comenzar.
                   </p>
                 </>
               )}
@@ -410,6 +442,8 @@ function App() {
                 <Puzzle
                   key={scene.id}
                   puzzle={room.puzzle}
+                  sceneId={scene.id}
+                  now={now}
                   act={act}
                   host={host}
                   connected={connected}
@@ -499,72 +533,61 @@ function App() {
                   <div
                     className={
                       "charge-call " +
-                      (room.chargePhase === "release" ? "release" : "")
+                      (room.myCharge.phase === "release" ? "release" : "")
                     }
                   >
-                    {room.chargePhase === "release"
-                      ? "¡SOLTÁ! Todos deben soltar"
-                      : room.energy >= 100
-                        ? "¡Trineo listo!"
-                        : "¡SOSTENÉ! Los dos equipos juntos"}
+                    {room.myWon
+                      ? "¡Ganaste 100 puntos!"
+                      : room.closed
+                        ? "Cupo cerrado"
+                        : room.myCharge.phase === "release"
+                          ? "¡SOLTÁ durante un segundo!"
+                          : "SOSTENÉ para cargar tu batería"}
                   </div>
-                  <div
-                    className="energy"
-                    role="progressbar"
-                    aria-label="Energía del trineo"
-                    aria-valuenow={room.energy}
-                    aria-valuemin={0}
-                    aria-valuemax={100}
-                  >
-                    <div style={{ width: room.energy + "%" }} />
-                  </div>
-                  <h2>{Math.round(room.energy)}% de espíritu navideño</h2>
-                  <div className="team-counts">
-                    {teams.map((t, i) => (
-                      <div key={t}>
-                        {t}
-                        <strong>{room.holding[i]} sosteniendo</strong>
-                        <small>
-                          Meta:{" "}
-                          {Math.min(
-                            5,
-                            Math.max(
-                              1,
-                              room.players.filter(
-                                (p) => p.online && p.team === i,
-                              ).length,
-                            ),
-                          )}
-                        </small>
+                  {mode === "player" ? (
+                    <>
+                      <div
+                        className="energy"
+                        role="progressbar"
+                        aria-label="Tu batería"
+                        aria-valuenow={room.myCharge.energy}
+                        aria-valuemin={0}
+                        aria-valuemax={100}
+                      >
+                        <div style={{ width: room.myCharge.energy + "%" }} />
                       </div>
-                    ))}
-                  </div>
-                  {mode === "player" && (
-                    <button
-                      className="primary hold"
-                      disabled={room.energy >= 100 || !connected}
-                      onPointerDown={(e) => {
-                        e.currentTarget.setPointerCapture(e.pointerId);
-                        hold(true);
-                      }}
-                      onPointerUp={() => hold(false)}
-                      onPointerCancel={() => hold(false)}
-                      onLostPointerCapture={() => hold(false)}
-                      onKeyDown={(e) => {
-                        if ([" ", "Enter"].includes(e.key) && !e.repeat) {
-                          e.preventDefault();
+                      <h2>{Math.round(room.myCharge.energy)}%</h2>
+                      <button
+                        className="primary hold"
+                        disabled={room.closed || room.myWon || !connected}
+                        onPointerDown={(e) => {
+                          e.currentTarget.setPointerCapture(e.pointerId);
                           hold(true);
-                        }
-                      }}
-                      onKeyUp={() => hold(false)}
-                      onBlur={() => hold(false)}
-                    >
-                      Mantené presionado · soltá cuando se indique
-                    </button>
+                        }}
+                        onPointerUp={() => hold(false)}
+                        onPointerCancel={() => hold(false)}
+                        onLostPointerCapture={() => hold(false)}
+                        onKeyDown={(e) => {
+                          if ([" ", "Enter"].includes(e.key) && !e.repeat) {
+                            e.preventDefault();
+                            hold(true);
+                          }
+                        }}
+                        onKeyUp={() => hold(false)}
+                        onBlur={() => hold(false)}
+                      >
+                        Mantené presionado · soltá cuando se indique
+                      </button>
+                    </>
+                  ) : (
+                    <p className="muted">
+                      Cada jugador carga desde su celular. Esperando a los
+                      primeros {room.target}.
+                    </p>
                   )}
                 </>
               )}
-              {["ready", "final"].includes(scene.type) && (
+              {scene.type === "ready" && (
                 <>
                   <div
                     className={
@@ -635,6 +658,22 @@ function App() {
                       <strong>Equipo de soporte del año: todos ustedes.</strong>
                     </div>
                   )}
+                </>
+              )}
+              {scene.type === "final" && (
+                <>
+                  <RankingTree ranking={room.ranking} />
+                  <div className="result">
+                    <h3>Acta de Nochebuena</h3>
+                    {room.history
+                      .filter((h) => ["ballot", "punishment"].includes(h.id))
+                      .map((h) => (
+                        <p key={h.id}>
+                          {h.winners.map((w) => w.label).join(" / ") ||
+                            "Decisión del presentador"}
+                        </p>
+                      ))}
+                  </div>
                 </>
               )}
             </section>
@@ -719,15 +758,15 @@ function App() {
                       <>
                         <button
                           onClick={() => act({ type: "hint" })}
-                          disabled={room.puzzle.hint >= 3 || room.puzzle.solved}
+                          disabled={room.puzzle.hint >= 3 || room.closed}
                         >
                           Revelar ayuda ({room.puzzle.hint}/3)
                         </button>
                         <button
                           onClick={() => act({ type: "assist" })}
-                          disabled={room.puzzle.solved}
+                          disabled={room.closed}
                         >
-                          Resolver con ayuda
+                          Cerrar sin más puntos
                         </button>
                       </>
                     )}
@@ -745,6 +784,11 @@ function App() {
                       <>
                         <button
                           className="primary"
+                          disabled={
+                            !!room.advanceAt ||
+                            (["puzzle", "charge"].includes(scene.type) &&
+                              !room.closed)
+                          }
                           onClick={() => act({ type: "next" })}
                         >
                           {scene.type === "lobby"
@@ -755,26 +799,30 @@ function App() {
                           className="quiet"
                           onClick={() => act({ type: "skip" })}
                         >
-                          Saltar con ayuda
+                          Saltar sin más puntos
                         </button>
                       </>
                     )}
-                    <small>El tiempo orienta; nunca elimina a nadie.</small>
-                    {room.players.some((p) => !p.online) && (
-                      <details>
-                        <summary>Jugadores desconectados</summary>
-                        {room.players
-                          .filter((p) => !p.online)
-                          .map((p) => (
-                            <button
-                              key={p.id}
-                              onClick={() => act({ type: "kick", id: p.id })}
-                            >
-                              Retirar a {p.name}
-                            </button>
-                          ))}
-                      </details>
-                    )}
+                    <small>
+                      El cupo competitivo avanza automáticamente. Los capítulos
+                      de votación los dirigís vos.
+                    </small>
+                    {scene.type === "lobby" &&
+                      room.players.some((p) => !p.online) && (
+                        <details>
+                          <summary>Jugadores desconectados</summary>
+                          {room.players
+                            .filter((p) => !p.online)
+                            .map((p) => (
+                              <button
+                                key={p.id}
+                                onClick={() => act({ type: "kick", id: p.id })}
+                              >
+                                Retirar a {p.name}
+                              </button>
+                            ))}
+                        </details>
+                      )}
                   </div>
                 )}
               </aside>

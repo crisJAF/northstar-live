@@ -1,70 +1,56 @@
-# Northstar Live — Operación Nochebuena
+# Northstar Live - Operación Nochebuena
 
-A cooperative, realtime Christmas adventure for 14 friends (seven pairs). React + Vite, Node.js + Socket.IO. Original articulated SVG characters and Spanish dialogue with Nicaraguan humor.
+Individual realtime Christmas competition for up to 20 players, designed for 14 friends. React + Vite, Node.js + Socket.IO, original animated SVG cast.
 
-## Run on the local network
+## Local network
 
-Requires Node.js 22.12 or newer.
+Requires Node.js 22.12+. Run `npm install` and `npm run dev`. Open Vite's Network URL on the laptop and phones on the same Wi-Fi. Vite listens on port 5173 and proxies Socket.IO to the Node backend on port 3001. Use the laptop IP rather than localhost on phones. The QR base address is editable by the host.
+
+`npm test` runs the test suite. `npm run build` produces the frontend; `npm start` serves it through Node on port 3001 (`PORT` can override). The app needs a WebSocket-capable Node host, not static GitHub Pages.
+
+## Competitive rules
+
+- No pairs or teams. Every player gets all the clues and answers independently.
+- The host starts after everyone has joined. Enrollment then closes; existing in-memory player tokens can reconnect.
+- The winning quota is `ceil(enrolled players / 2)`, frozen for the whole game: 14 players means seven winning slots per puzzle. Disconnecting does not reduce it.
+- Each of the first quota-sized correct submissions earns 100 points once per puzzle. Invalid, wrong, duplicate, stale-scene and post-close submissions do not score. Wrong attempts have a four-second retry cooldown.
+- Seven multiple-choice puzzles plus an individual hold/release/hold charging challenge. Maximum 800 points on the full route; 300 on the short route.
+- When the quota fills, answers close immediately. A five-second result window precedes automatic advancement by the server. The correct choice becomes visible only after closure.
+- The host can skip a stuck challenge. Already awarded points remain; remaining players get no free points.
+- Creative proposals, opinion votes and the final light ceremony have no correct answer and give no points. These scenes remain presenter-controlled.
+- Final ranking: descending points, then ascending accumulated solve time, then registration order. Ornaments display nicknames and scores from top to bottom; the last place gets a Grinch face. The equivalent score table is expandable.
+- Server reception order resolves simultaneous quiz submissions. Charge completions in the same server tick use hold start time, then registration order.
+
+## Session and privacy
+
+Only `northstar-nickname` is saved to browser sessionStorage. No game credentials, jobs, scores or roles are persisted in browser storage. The 14 fictional employment cards in `shared/jobs.js` are assigned randomly without repeating the initial 14 assignments.
+
+Network reconnection works while the page remains open. A full page reload loses the player token and cannot reclaim a running-game identity using just a nickname. Do not reload during a round. The host can manually copy the private recovery key and re-enter it after refreshing their panel; no key is saved by the app. Before starting, disconnected entries can be removed. Once started, records and quota remain fixed.
+
+## Answer guide
+
+The private PDF is generated from the actual server answer catalog. It includes all seven questions, their four options with the correct one marked, the charging protocol, and a section explaining non-scored narrative decisions.
 
 ```sh
-npm install
-npm run dev
+node scripts/export-answer-guide.mjs
+python scripts/build-answer-guide.py
 ```
 
-Vite binds to `0.0.0.0:5173` and proxies Socket.IO to `127.0.0.1:3001`. Open the **Network** URL printed by Vite on the laptop and phones connected to the same Wi-Fi. Do not use localhost on a phone. The presenter can edit the QR base URL; the audience-screen link carries that address too. The server must be reachable through the local firewall and the Wi-Fi must permit device-to-device connections.
+The Python script requires ReportLab and Windows Arial fonts. Final output: `output/pdf/northstar-live-guia-de-puzzles.pdf`. Generated output and temporary renders are ignored by Git and are not served to players.
 
-```sh
-npm test
-npm run build
-npm start
-```
+## Architecture
 
-The production build is served by Node on port 3001 (`PORT` overrides it). This needs a Node/WebSocket host; it is not a GitHub Pages static app.
+- `shared/story.js`: scenes and short/full routes.
+- `server/puzzles.js`: private answer bank and personalized snapshots.
+- `server/game.js`: quota, scoring, transitions, charging and ranking.
+- `server/index.js`: Socket.IO authorization and server tick.
+- `src/Puzzle.jsx`: individual multiple-choice interface.
+- `src/RankingTree.jsx`: ordered ornaments and score table.
+- `src/Stage.jsx`: Santa, Rodolfo, Yelba and Kevin, locations and reactions.
+- `src/session.js`: nickname-only session handling.
 
-## Experience
+Tests cover exact seven-of-fourteen awards, late/duplicate/stale submissions, retry cooldown, odd quotas, disconnections, automatic advancement, host skips, charge behavior, deterministic ranking and nickname-only persistence.
 
-- Full adventure: intended for 30–40 minutes; short route: 15–20 minutes. Real duration depends on the group and presenter.
-- Symbol-order password with distributed clues.
-- Two-round electrical panel: operators cannot see the manual; technicians cannot submit. Roles swap after the first solution.
-- Budget negotiation, private moderation and public voting for a custom labor clause.
-- Gift-to-city deduction and startup-sequence reconstruction.
-- Hold/release/hold cooperative charging with expired-input detection.
-- Audit requiring chronological order, culprit and decisive evidence.
-- Three earned seals unlock the final reboot code; shared lights and final resolutions.
-- Timers are advisory, with presenter controls for extra time, three hints, assisted solutions and explicit skips.
-- Santa, Rodolfo, Yelba and Kevin animate while waiting and react to attempts and success. Four illustrated locations, snow, conveyor gifts, sleigh movement and finale confetti. Reduced motion is respected.
+## Boundaries
 
-## Employment catalog and session behavior
-
-`shared/jobs.js` contains the hardcoded decorative jobs, experience and hiring reasons. The server assigns a random catalog entry at join, without repeating the first 14 assignments. No job influences permissions or puzzle difficulty.
-
-**Only the nickname is stored in browser sessionStorage**, under `northstar-nickname`. No room keys, roles, jobs or player tokens are written to localStorage, sessionStorage, cookies or a database. Legacy prototype credential entries are removed. The active room and credentials exist in memory only.
-
-A brief network interruption reconnects the same player while the page remains open. A full reload intentionally loses that player credential. The presenter can remove the disconnected entry so the same nickname can join again with a fresh card. Active duplicate nicknames are rejected rather than impersonating someone by name. The host can manually copy their recovery key from the private panel and re-enter it after reloading; the app does not persist it. Never project that private panel.
-
-## Presenter flow
-
-1. Create a room and select a duration.
-2. Open **Pantalla del público** on the projector. Keep the host panel private.
-3. Invite players via QR, wait for everyone, and ask them to find their numbered pair.
-4. Start the adventure. Players share clues aloud and submit solutions from phones.
-5. Use hints before assisted skips. Choose 1–4 proposals before opening the vote.
-6. Advance manually after the shared light ceremony.
-
-## Architecture and verification
-
-- `shared/story.js`: public narrative, routes and choice labels.
-- `shared/jobs.js`: fixed fictional employment catalog.
-- `server/puzzles.js`: private answers, clue distribution, validation and hint ladders. Not imported into the client bundle.
-- `server/game.js`: authoritative state transitions and recipient-specific snapshots.
-- `server/index.js`: realtime transport, host authorization and charge tick.
-- `src/Stage.jsx`: original vector cast and locations.
-- `src/Puzzle.jsx`: accessible puzzle controls.
-- `src/session.js`: nickname-only persistence and prototype migration.
-- `test/`: uniqueness, privacy, role switching, charging, moderation, storage and full 14-client integration checks.
-
-## Current boundaries
-
-Rooms are in memory and disappear on server restart; use one server instance. No accounts, durable scores or automatic room expiry. The app is intended for a trusted gathering on a local network, not an unrestricted public service. Capacity is 20, with content designed for 14. Hints let the presenter recover from missing participants. Google Fonts are optional, with system font fallback. Character motion is procedural SVG/CSS, not prerecorded films or voice acting. Rehearse on the actual phones and venue Wi-Fi.
-
-No license has been granted yet.
+Rooms and scores live in server memory and disappear after restart. Use one server instance on a trusted local network; this is not hardened for unrestricted public hosting. Timers are advisory. Short/full duration estimates depend on player speed. Google Fonts have system fallbacks. Reduced motion is supported. No voice acting or prerecorded films. No license has been granted yet.

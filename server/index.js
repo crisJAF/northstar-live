@@ -11,7 +11,7 @@ import {
   current,
   submit,
   assist,
-  tickCharge,
+  tick,
 } from "./game.js";
 export function createApp() {
   const app = express(),
@@ -84,14 +84,17 @@ export function createApp() {
             if (data.type === "close") r.closed = true;
             if (data.type === "assist") assist(r);
             if (data.type === "hint" && scene.type === "puzzle")
-              r.puzzle.hint = Math.min(3, r.puzzle.hint + 1);
+              r.round.hint = Math.min(3, r.round.hint + 1);
             if (data.type === "extend") r.extraSeconds += 60;
             if (data.type === "kick") {
               const stale = r.players.find((p) => p.id === data.id);
               if (!stale || stale.online)
                 throw Error("Solo se pueden retirar jugadores desconectados.");
+              if (r.step !== 0)
+                throw Error(
+                  "El registro de puntos se conserva durante la partida. Usá saltar si falta alguien.",
+                );
               r.players = r.players.filter((p) => p !== stale);
-              r.players.forEach((p, i) => (p.pair = Math.floor(i / 2)));
             }
             if (data.type === "approve") {
               if (scene.type !== "proposal" || !r.proposals[data.id])
@@ -107,8 +110,12 @@ export function createApp() {
           } else {
             if (!p) throw Error("Entrá como jugador.");
             if (data.type === "vote") vote(r, p.id, String(data.value));
-            else if (data.type === "solve") submit(r, p, data.value);
-            else if (data.type === "proposal") {
+            else if (data.type === "solve") {
+              const correct = submit(r, p, data.value, data.scene);
+              ack({ ok: true, correct });
+              broadcast(r);
+              return;
+            } else if (data.type === "proposal") {
               if (
                 scene.type !== "proposal" ||
                 r.closed ||
@@ -121,7 +128,13 @@ export function createApp() {
                 );
               r.proposals[p.id] = data.text.trim();
             } else if (data.type === "hold") {
-              if (scene.type === "charge") {
+              if (
+                scene.type === "charge" &&
+                !r.closed &&
+                data.scene === scene.id
+              ) {
+                if (data.value === true && !p.holding)
+                  p.holdStarted = Date.now();
                 p.holding = data.value === true;
                 p.lastHold = Date.now();
               }
@@ -150,12 +163,9 @@ export function createApp() {
       }
     });
   });
-  const tick = setInterval(() => {
+  const ticker = setInterval(() => {
     for (const r of rooms.values()) {
-      if (current(r).type === "charge" && r.energy < 100) {
-        tickCharge(r);
-        broadcast(r);
-      }
+      if (tick(r)) broadcast(r);
     }
   }, 250);
   app.get("/health", (_, res) => res.json({ ok: true }));
@@ -167,7 +177,7 @@ export function createApp() {
     http,
     io,
     close: () => {
-      clearInterval(tick);
+      clearInterval(ticker);
       io.close();
       http.close();
     },

@@ -1,10 +1,25 @@
-// Private solutions: this module is never imported by the browser.
-import { symbols, benefits, gifts, cities, events } from "../shared/story.js";
+// Authoritative answer bank. Never imported by the browser.
 export const puzzles = {
   access: {
-    kind: "order",
-    choices: symbols,
-    answer: ["Reno", "Regalo", "Copo", "Estrella", "Campana", "Bastón"],
+    kind: "choice",
+    choices: [
+      {
+        id: "A",
+        label: "Reno, Regalo, Estrella, Copo, Campana, Bastón",
+      },
+      {
+        id: "B",
+        label: "Reno, Regalo, Copo, Estrella, Campana, Bastón",
+      },
+      {
+        id: "C",
+        label: "Bastón, Regalo, Copo, Estrella, Campana, Reno",
+      },
+      {
+        id: "D",
+        label: "Reno, Copo, Regalo, Campana, Estrella, Bastón",
+      },
+    ],
     clues: [
       "El reno va primero.",
       "El regalo va inmediatamente después del reno.",
@@ -21,14 +36,35 @@ export const puzzles = {
     ],
     success:
       "Acceso recuperado. El sistema confundió la barba de Santa con una alfombra.",
-    seal: { name: "Acceso", digit: "4" },
+    seal: {
+      name: "Acceso",
+      digit: "4",
+    },
+    correct: "B",
   },
   circuits: {
-    kind: "circuit",
-    choices: ["Copo", "Estrella", "Regalo", "Campana"],
-    answers: [
-      ["Copo", "Estrella", "Campana"],
-      ["Regalo", "Campana", "Copo"],
+    kind: "choice",
+    choices: [
+      {
+        id: "A",
+        label:
+          "Encendida: Copo, Estrella, Campana. Apagada: Regalo, Campana, Copo.",
+      },
+      {
+        id: "B",
+        label:
+          "Encendida: Estrella, Copo, Campana. Apagada: Regalo, Copo, Campana.",
+      },
+      {
+        id: "C",
+        label:
+          "Encendida: Copo, Regalo, Estrella. Apagada: Campana, Regalo, Copo.",
+      },
+      {
+        id: "D",
+        label:
+          "Encendida: Regalo, Campana, Copo. Apagada: Copo, Estrella, Campana.",
+      },
     ],
     clues: [
       "Con la nariz encendida, la primera tecla es Copo.",
@@ -45,11 +81,28 @@ export const puzzles = {
       "Ronda 2: Regalo, Campana, Copo.",
     ],
     success: "Circuitos activos. Kevin quedó envuelto en dos metros de cinta.",
+    correct: "A",
   },
   budget: {
-    kind: "budget",
-    choices: benefits,
-    answer: ["pay", "rest", "bus"],
+    kind: "choice",
+    choices: [
+      {
+        id: "A",
+        label: "Aguinaldo (5) + descanso (3) + pizza (2)",
+      },
+      {
+        id: "B",
+        label: "Bus (2) + karaoke (4) + descanso (3)",
+      },
+      {
+        id: "C",
+        label: "Aguinaldo (5) + descanso (3) + bus (2)",
+      },
+      {
+        id: "D",
+        label: "Aguinaldo (5) + bus (2) + karaoke (4)",
+      },
+    ],
     clues: [
       "El sindicato exige un beneficio de pago.",
       "Pizza no cuenta como pago.",
@@ -65,12 +118,32 @@ export const puzzles = {
       "Seleccionen aguinaldo, descanso y bus.",
     ],
     success: "Presupuesto aprobado. La pizza ya no aparece en la nómina.",
+    correct: "C",
   },
   gifts: {
-    kind: "mapping",
-    choices: gifts,
-    fields: cities,
-    answer: ["Bicicleta", "Parlante", "Libro", "Bufanda"],
+    kind: "choice",
+    choices: [
+      {
+        id: "A",
+        label:
+          "Managua: Libro; León: Parlante; Masaya: Bicicleta; Granada: Bufanda",
+      },
+      {
+        id: "B",
+        label:
+          "Managua: Bicicleta; León: Libro; Masaya: Parlante; Granada: Bufanda",
+      },
+      {
+        id: "C",
+        label:
+          "Managua: Bicicleta; León: Parlante; Masaya: Bufanda; Granada: Libro",
+      },
+      {
+        id: "D",
+        label:
+          "Managua: Bicicleta; León: Parlante; Masaya: Libro; Granada: Bufanda",
+      },
+    ],
     clues: [
       "La bicicleta va a Managua.",
       "El parlante va a León.",
@@ -87,12 +160,32 @@ export const puzzles = {
     ],
     success:
       "Regalos clasificados. La abuelita de León ya está probando el parlante.",
-    seal: { name: "Producción", digit: "2" },
+    seal: {
+      name: "Producción",
+      digit: "2",
+    },
+    correct: "D",
   },
   sequence: {
-    kind: "order",
-    choices: ["Palanca", "Encendido", "Luces", "Campanas"],
-    answer: ["Luces", "Campanas", "Palanca", "Encendido"],
+    kind: "choice",
+    choices: [
+      {
+        id: "A",
+        label: "Luces, Palanca, Campanas, Encendido",
+      },
+      {
+        id: "B",
+        label: "Luces, Campanas, Palanca, Encendido",
+      },
+      {
+        id: "C",
+        label: "Campanas, Luces, Palanca, Encendido",
+      },
+      {
+        id: "D",
+        label: "Encendido, Luces, Campanas, Palanca",
+      },
+    ],
     clues: [
       "Las luces son el primer paso.",
       "Las campanas van inmediatamente después de las luces.",
@@ -109,11 +202,32 @@ export const puzzles = {
     ],
     success:
       "Secuencia reconstruida. Rodolfo promete recordarla… hasta mañana.",
+    correct: "B",
   },
   audit: {
-    kind: "audit",
-    choices: events,
-    answer: [events[1], events[0], events[2], events[3]],
+    kind: "choice",
+    choices: [
+      {
+        id: "A",
+        label:
+          "Compra, respaldo, clics, excusa. Culpable: Kevin. Prueba: sus permisos.",
+      },
+      {
+        id: "B",
+        label:
+          "Respaldo, compra, excusa, clics. Culpable: Santa. Prueba: la tarjeta.",
+      },
+      {
+        id: "C",
+        label:
+          "Respaldo, compra, clics, excusa. Culpable: Santa. Prueba: registro de 17 clics.",
+      },
+      {
+        id: "D",
+        label:
+          "Respaldo, compra, clics, excusa. Culpable: Rodolfo. Prueba: estaba de goma.",
+      },
+    ],
     clues: [
       "23:30 — Kevin guardó un respaldo y cerró sesión.",
       "23:40 — Se compró NavidadOS con la tarjeta de Santa.",
@@ -130,9 +244,10 @@ export const puzzles = {
     ],
     success:
       "Caso cerrado. Santa busca cómo borrar historial de administrador.",
+    correct: "C",
   },
   reboot: {
-    kind: "code",
+    kind: "choice",
     clues: [
       "El primer dígito viene del sello de Acceso.",
       "El segundo viene del sello de Producción.",
@@ -142,92 +257,53 @@ export const puzzles = {
       "El código tiene tres cifras.",
       "El orden es Acceso, Producción y Vuelo.",
     ],
-    answer: "427",
     hints: [
       "Miren los tres sellos recuperados.",
       "Acceso 4, Producción 2, Vuelo 7.",
       "El código es 427.",
     ],
     success: "Respaldo restaurado. Ya pueden encender sus luces.",
+    choices: [
+      {
+        id: "A",
+        label: "427",
+      },
+      {
+        id: "B",
+        label: "472",
+      },
+      {
+        id: "C",
+        label: "247",
+      },
+      {
+        id: "D",
+        label: "724",
+      },
+    ],
+    correct: "A",
   },
 };
-export function newPuzzle() {
-  return {
-    stage: 0,
-    attempts: 0,
-    hint: 0,
-    solved: false,
-    assisted: false,
-    feedback: "",
-    revision: 0,
-  };
-}
-export function solve(id, state, value) {
+export function puzzleView(id, round, player, closed) {
   const p = puzzles[id];
-  if (!p || state.solved) throw Error("Este puzzle no acepta respuestas.");
-  state.attempts++;
-  let correct = false;
-  if (p.kind === "budget")
-    correct =
-      Array.isArray(value) &&
-      value.length === 3 &&
-      new Set(value).size === 3 &&
-      p.answer.every((x) => value.includes(x));
-  else if (p.kind === "audit")
-    correct =
-      !!value &&
-      JSON.stringify(value.order) === JSON.stringify(p.answer) &&
-      value.culprit === "Santa" &&
-      value.evidence === "Registro de 17 clics";
-  else
-    correct =
-      JSON.stringify(value) ===
-      JSON.stringify(p.kind === "circuit" ? p.answers[state.stage] : p.answer);
-  state.revision++;
-  if (!correct) {
-    state.feedback =
-      "Algo no cuadra. Comparen las pistas; el Polo Norte no cobra por otro intento.";
-    return false;
-  }
-  if (p.kind === "circuit" && state.stage === 0) {
-    state.stage = 1;
-    state.feedback =
-      "Primer circuito listo. ¡Intercambien operadores y técnicos!";
-    return true;
-  }
-  state.solved = true;
-  state.feedback = p.success;
-  return true;
-}
-export function puzzleView(id, state, player, players, host) {
-  const p = puzzles[id];
-  if (!p) return null;
-  const operatorTeam = state.stage % 2;
-  let clues = [];
-  if (host) clues = p.clues;
-  else if (player) {
-    if (p.kind === "circuit") {
-      if (player.team !== operatorTeam) clues = p.clues;
-    } else {
-      const pairs = Math.max(1, Math.ceil(players.length / 2));
-      clues = p.clues.filter((_, i) => i % pairs === player.pair);
-    }
-  }
+  const solved = round.winners.some((w) => w.id === player?.id);
   return {
-    ...state,
-    kind: p.kind,
+    kind: "choice",
     choices: p.choices,
-    fields: p.fields,
-    clues,
-    hints: p.hints.slice(0, state.hint),
-    canSubmit:
-      !!player && (p.kind !== "circuit" || player.team === operatorTeam),
-    operatorTeam,
-    required:
-      p.kind === "circuit"
-        ? 3
-        : p.kind === "order" || p.kind === "audit"
-          ? p.answer.length
-          : undefined,
+    clues: p.clues,
+    hints: p.hints.slice(0, round.hint),
+    hint: round.hint,
+    canSubmit: !!player && !closed && !solved,
+    solved,
+    closed,
+    attempts: round.attempts[player?.id] || 0,
+    retryAt: round.cooldowns[player?.id] || 0,
+    revision: round.attempts[player?.id] || 0,
+    feedback: solved
+      ? "¡Correcto! Ganaste 100 puntos."
+      : closed
+        ? "Cupo cerrado. La próxima misión es otra oportunidad."
+        : "",
+    correct: closed ? p.correct : undefined,
   };
 }
